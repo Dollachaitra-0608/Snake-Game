@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐍 Snake Master - The Ultimate Snake Experience</title>
+    <meta name="description" content="Play the ultimate Snake game with advanced features, multiple food types, power-ups, and mobile controls.">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐍</text></svg>">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Snake Master - Ultimate Snake Game">
+    <meta property="og:description" content="Experience the most advanced Snake game with multiple food types, power-ups, mobile controls, and audio effects.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://snake-master.vercel.app">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Snake Master - Ultimate Snake Game">
+    <meta name="twitter:description" content="Play the ultimate Snake game with advanced features and mobile support.">
+    
+    <!-- Preload critical resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Tailwind CSS CDN for standalone HTML -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': {
+                                transform: 'translate(0px, 0px) scale(1)',
+                            },
+                            '33%': {
+                                transform: 'translate(30px, -50px) scale(1.1)',
+                            },
+                            '66%': {
+                                transform: 'translate(-20px, 20px) scale(0.9)',
+                            },
+                            '100%': {
+                                transform: 'translate(0px, 0px) scale(1)',
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Custom styles for the game */
+        .animation-delay-2000 {
+            animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+            animation-delay: 4s;
+        }
+        
+        /* Smooth transitions */
+        * {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* Game canvas styling */
+        canvas {
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+        
+        /* Button hover effects */
+        .btn-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Mobile touch feedback */
+        .btn-touch:active {
+            transform: scale(0.95);
+        }
+        
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(45deg, #10b981, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Card animations */
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Loading animation */
+        .loading {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        /* Game grid */
+        .game-grid {
+            background-image: 
+                linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        /* Dark mode styles */
+        .dark .game-grid {
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+        }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 640px) {
+            .mobile-adjust {
+                padding: 1rem;
+            }
+            
+            .mobile-text {
+                font-size: 0.875rem;
+            }
+            
+            .mobile-button {
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+            }
+        }
+        
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .high-contrast {
+                border: 2px solid currentColor;
+            }
+        }
+        
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            .animate-blob {
+                animation: none;
+            }
+            
+            * {
+                transition: none !important;
+                animation: none !important;
+            }
+        }
+        
+        /* Focus styles for accessibility */
+        .focus-visible:focus-visible {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+        
+        /* Game status indicators */
+        .status-indicator {
+            position: relative;
+        }
+        
+        .status-indicator::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-indicator.paused::after {
+            background: #f59e0b;
+        }
+        
+        .status-indicator.game-over::after {
+            background: #ef4444;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-green-400 via-blue-500 to-purple-600">
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="fixed inset-0 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="text-6xl mb-4">🐍</div>
+            <div class="text-2xl font-bold text-white mb-4">Snake Master</div>
+            <div class="loading w-8 h-8 border-4 border-white border-t-transparent rounded-full mx-auto"></div>
+            <div class="text-white mt-4">Loading game...</div>
+        </div>
+    </div>
+
+    <!-- Main Game Container -->
+    <div id="app" class="min-h-screen">
+        <!-- Landing Page -->
+        <div id="landing-page" class="min-h-screen flex items-center justify-center p-4">
+            <!-- Animated Background -->
+            <div class="absolute inset-0 overflow-hidden">
+                <div class="absolute -top-40 -right-40 w-80 h-80 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+                <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+                <div class="absolute top-40 left-40 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+            </div>
+
+            <!-- Landing Card -->
+            <div class="w-full max-w-md z-10 backdrop-blur-sm bg-white/90 shadow-2xl rounded-lg card-hover">
+                <div class="p-6 text-center">
+                    <h1 class="text-4xl font-bold gradient-text mb-2">
+                        🐍 Snake Master
+                    </h1>
+                    <p class="text-gray-600 mb-6">The Ultimate Snake Experience</p>
+                </div>
+                
+                <div class="p-6 pt-0 space-y-6">
+                    <div class="space-y-2">
+                        <label for="playerName" class="block text-sm font-medium text-gray-700">
+                            Enter Your Name
+                        </label>
+                        <input
+                            type="text"
+                            id="playerName"
+                            placeholder="Player Name"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
+
+                    <button
+                        id="start-game-btn"
+                        class="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold py-3 px-4 rounded-md btn-hover btn-touch focus-visible disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled
+                    >
+                        🎮 Start Game
+                    </button>
+
+                    <button
+                        id="leaderboard-btn"
+                        class="w-full border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-bold py-3 px-4 rounded-md btn-hover btn-touch focus-visible"
+                    >
+                        🏆 Leaderboard
+                    </button>
+
+                    <div class="text-sm text-gray-600 space-y-2">
+                        <h3 class="font-semibold">How to Play:</h3>
+                        <ul class="space-y-1 text-xs">
+                            <li>• Use WASD or Arrow keys to move</li>
+                            <li>• Eat food to grow and score points</li>
+                            <li>• Avoid walls and your own tail</li>
+                            <li>• Press SPACE to pause</li>
+                            <li>• Press C for dark mode, T for classic mode</li>
+                            <li>• Press O for obstacles, P for power-ups</li>
+                        </ul>
+                    </div>
+
+                    <div class="text-center text-xs text-gray-500">
+                        &copy; 2025 Snake Master. All rights reserved.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden min-h-screen p-4">
+            <div class="max-w-6xl mx-auto">
+                <div class="flex flex-col lg:flex-row gap-6">
+                    <!-- Game Canvas Area -->
+                    <div class="flex-1">
+                        <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-xl p-6">
+                            <!-- Game Header -->
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="space-y-1">
+                                    <h2 class="text-2xl font-bold text-gray-800 status-indicator" id="game-title">
+                                        Snake Master
+                                    </h2>
+                                    <p class="text-sm text-gray-600" id="player-info">
+                                        Player: Guest
+                                    </p>
+                                </div>
+                                <div class="text-right text-gray-800">
+                                    <div class="text-2xl font-bold" id="score-display">Score: 0</div>
+                                    <div class="text-sm" id="length-display">Length: 1</div>
+                                </div>
+                            </div>
+
+                            <!-- Game Canvas Container -->
+                            <div class="relative">
+                                <canvas
+                                    id="game-canvas"
+                                    width="400"
+                                    height="400"
+                                    class="border-2 border-gray-300 rounded-lg mx-auto block bg-blue-50"
+                                ></canvas>
+
+                                <!-- Game Overlays -->
+                                <div id="pause-overlay" class="hidden absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+                                    <div class="bg-white p-6 rounded-lg shadow-xl text-center">
+                                        <h3 class="text-xl font-bold mb-2">Game Paused</h3>
+                                        <p class="text-sm text-gray-600 mb-4">Press SPACE to resume</p>
+                                        <button id="resume-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded btn-hover">
+                                            Resume
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="game-over-overlay" class="hidden absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+                                    <div class="bg-white p-6 rounded-lg shadow-xl text-center">
+                                        <h3 class="text-xl font-bold mb-2">Game Over!</h3>
+                                        <p class="text-lg mb-2" id="final-score">Final Score: 0</p>
+                                        <p class="text-sm text-gray-600 mb-4" id="final-length">Snake Length: 1</p>
+                                        <div class="space-x-2">
+                                            <button id="play-again-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded btn-hover">
+                                                Play Again
+                                            </button>
+                                            <button id="back-to-menu-btn" class="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-bold py-2 px-4 rounded btn-hover">
+                                                Menu
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Game Controls -->
+                            <div class="mt-4 flex flex-wrap gap-2 justify-center">
+                                <button id="pause-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded text-sm btn-hover">
+                                    Pause (Space)
+                                </button>
+                                <button id="reset-btn" class="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-bold py-2 px-4 rounded text-sm btn-hover">
+                                    Reset
+                                </button>
+                                <button id="menu-btn" class="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-bold py-2 px-4 rounded text-sm btn-hover">
+                                    Menu
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mobile Controls -->
+                        <div id="mobile-controls" class="block sm:hidden mt-4">
+                            <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-xl p-4">
+                                <div class="flex flex-col items-center space-y-3">
+                                    <!-- Up button -->
+                                    <button id="up-btn" class="w-14 h-14 rounded-full bg-white hover:bg-gray-50 border-2 border-gray-300 flex items-center justify-center text-xl font-bold btn-touch">
+                                        ↑
+                                    </button>
+
+                                    <!-- Left, Pause, Right buttons -->
+                                    <div class="flex items-center space-x-3">
+                                        <button id="left-btn" class="w-14 h-14 rounded-full bg-white hover:bg-gray-50 border-2 border-gray-300 flex items-center justify-center text-xl font-bold btn-touch">
+                                            ←
+                                        </button>
+                                        <button id="mobile-pause-btn" class="w-14 h-14 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center text-sm font-bold btn-touch">
+                                            ⏸
+                                        </button>
+                                        <button id="right-btn" class="w-14 h-14 rounded-full bg-white hover:bg-gray-50 border-2 border-gray-300 flex items-center justify-center text-xl font-bold btn-touch">
+                                            →
+                                        </button>
+                                    </div>
+
+                                    <!-- Down button -->
+                                    <button id="down-btn" class="w-14 h-14 rounded-full bg-white hover:bg-gray-50 border-2 border-gray-300 flex items-center justify-center text-xl font-bold btn-touch">
+                                        ↓
+                                    </button>
+                                </div>
+                                <div class="text-center text-xs text-gray-500 mt-3">
+                                    Tap buttons to control snake
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Panel -->
+                    <div class="lg:w-80 space-y-4">
+                        <!-- Settings Card -->
+                        <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-xl p-4">
+                            <h3 class="font-bold mb-3 text-gray-800">Settings</h3>
+                            <div class="space-y-2">
+                                <button id="dark-mode-btn" class="w-full text-left border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-3 rounded text-sm btn-hover">
+                                    🌙 Dark Mode (C)
+                                </button>
+                                <button id="classic-mode-btn" class="w-full text-left border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-3 rounded text-sm btn-hover">
+                                    🎮 Classic Mode (T)
+                                </button>
+                                <button id="obstacles-btn" class="w-full text-left border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-3 rounded text-sm btn-hover">
+                                    🧱 Obstacles (O)
+                                </button>
+                                <button id="powerups-btn" class="w-full text-left bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-3 rounded text-sm btn-hover">
+                                    ⚡ Power-ups (P)
+                                </button>
+                                <button id="music-btn" class="w-full text-left border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-3 rounded text-sm btn-hover">
+                                    🎵 Music (M)
+                                </button>
+                                <button id="sound-btn" class="w-full text-left border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-3 rounded text-sm btn-hover">
+                                    🔊 Sound (S)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Food Types Card -->
+                        <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-xl p-4">
+                            <h3 class="font-bold mb-3 text-gray-800">Food Types</h3>
+                            <div class="space-y-2 text-sm text-gray-600">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-4 h-4 bg-green-500 rounded"></div>
+                                    <span>Normal: +1 length, +1 score</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-4 h-4 bg-yellow-500 rounded"></div>
+                                    <span>Bonus: +3 score, speed boost</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-4 h-4 bg-blue-500 rounded"></div>
+                                    <span>Freeze: slow down snake</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-4 h-4 bg-red-500 rounded"></div>
+                                    <span>Poison: -1 score, shrink</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Controls Card -->
+                        <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-xl p-4">
+                            <h3 class="font-bold mb-3 text-gray-800">Controls</h3>
+                            <div class="space-y-1 text-sm text-gray-600">
+                                <div>WASD / Arrow Keys: Move</div>
+                                <div>Space: Pause/Resume</div>
+                                <div>C: Toggle Dark Mode</div>
+                                <div>T: Toggle Classic Mode</div>
+                                <div>O: Toggle Obstacles</div>
+                                <div>P: Toggle Power-ups</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Screen -->
+        <div id="leaderboard-screen" class="hidden min-h-screen flex items-center justify-center p-4">
+            <div class="w-full max-w-2xl backdrop-blur-sm bg-white/90 shadow-2xl rounded-lg">
+                <div class="p-6 text-center">
+                    <h1 class="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                        🏆 Leaderboard
+                    </h1>
+                </div>
+                
+                <div class="p-6 pt-0 space-y-4">
+                    <div id="scores-container">
+                        <div class="text-center py-8 text-gray-500">
+                            No scores yet! Play a game to see your results here.
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 pt-4">
+                        <button id="back-to-menu-leaderboard" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded btn-hover">
+                            Back to Menu
+                        </button>
+                        <button id="clear-scores-btn" class="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-bold py-3 px-4 rounded btn-hover">
+                            Clear Scores
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game JavaScript -->
+    <script>
+        // Game state
+        let gameState = {
+            currentView: 'landing',
+            playerName: '',
+            snake: [{ x: 10, y: 10 }],
+            food: [{ x: 15, y: 15, type: 'normal' }],
+            direction: { x: 1, y: 0 },
+            gameOver: false,
+            paused: false,
+            score: 0,
+            speed: 150,
+            settings: {
+                darkMode: false,
+                classicMode: false,
+                obstacles: false,
+                powerUps: true,
+                music: false,
+                sound: false
+            },
+            obstacles: [],
+            surpriseEvents: [],
+            speedBoost: 0,
+            freezeEffect: 0
+        };
+
+        // Game constants
+        const GRID_SIZE = 20;
+        const CANVAS_SIZE = 400;
+
+        // Audio context
+        let audioContext = null;
+
+        // Game loop interval
+        let gameLoop = null;
+        let eventLoop = null;
+
+        // Initialize audio context
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // Play sound function
+        function playSound(soundType) {
+            if (!gameState.settings.sound || !audioContext) return;
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            let frequency = 440;
+            let duration = 0.1;
+            let type = 'sine';
+            let volume = 0.1;
+
+            switch (soundType) {
+                case 'eat':
+                    frequency = 440;
+                    duration = 0.1;
+                    type = 'sine';
+                    volume = 0.1;
+                    break;
+                case 'button':
+                    frequency = 800;
+                    duration = 0.08;
+                    type = 'square';
+                    volume = 0.08;
+                    break;
+                case 'gameOver':
+                    frequency = 220;
+                    duration = 0.5;
+                    type = 'sawtooth';
+                    volume = 0.2;
+                    break;
+                case 'pause':
+                    frequency = 600;
+                    duration = 0.15;
+                    type = 'triangle';
+                    volume = 0.1;
+                    break;
+                case 'speedBoost':
+                    // Play ascending arpeggio
+                    setTimeout(() => playSimpleSound(523, 0.1, 'square', 0.15), 0);
+                    setTimeout(() => playSimpleSound(659, 0.1, 'square', 0.15), 50);
+                    setTimeout(() => playSimpleSound(784, 0.1, 'square', 0.15), 100);
+                    setTimeout(() => playSimpleSound(1047, 0.2, 'square', 0.15), 150);
+                    return;
+                default:
+                    break;
+            }
+
+            playSimpleSound(frequency, duration, type, volume);
+        }
+
+        function playSimpleSound(frequency, duration, type = 'sine', volume = 0.1) {
+            if (!audioContext) return;
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.type = type;
+
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        // Generate random position
+        function generateRandomPosition() {
+            return {
+                x: Math.floor(Math.random() * GRID_SIZE),
+                y: Math.floor(Math.random() * GRID_SIZE)
+            };
+        }
+
+        // Generate food
+        function generateFood() {
+            const position = generateRandomPosition();
+            const foodTypes = ['normal', 'normal', 'normal', 'bonus', 'freeze', 'poison'];
+            const type = gameState.settings.powerUps ? 
+                foodTypes[Math.floor(Math.random() * foodTypes.length)] : 'normal';
+            
+            return { ...position, type };
+        }
+
+        // Check collision
+        function checkCollision(head, body) {
+            // Wall collision
+            if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
+                return true;
+            }
+
+            // Self collision
+            if (body.some(segment => segment.x === head.x && segment.y === head.y)) {
+                return true;
+            }
+
+            // Obstacle collision
+            if (gameState.obstacles.some(obstacle => obstacle.x === head.x && obstacle.y === head.y)) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // Move snake
+        function moveSnake() {
+            if (gameState.gameOver || gameState.paused) return;
+
+            const newSnake = [...gameState.snake];
+            const head = { ...newSnake[0] };
+
+            head.x += gameState.direction.x;
+            head.y += gameState.direction.y;
+
+            if (checkCollision(head, newSnake)) {
+                gameState.gameOver = true;
+                playSound('gameOver');
+                showGameOver();
+                return;
+            }
+
+            newSnake.unshift(head);
+
+            // Check food collision
+            const eatenFoodIndex = gameState.food.findIndex(f => f.x === head.x && f.y === head.y);
+            if (eatenFoodIndex !== -1) {
+                const eatenFood = gameState.food[eatenFoodIndex];
+
+                switch (eatenFood.type) {
+                    case 'normal':
+                        gameState.score += 1;
+                        playSound('eat');
+                        break;
+                    case 'bonus':
+                        gameState.score += 3;
+                        gameState.speedBoost = 100;
+                        playSound('speedBoost');
+                        break;
+                    case 'freeze':
+                        gameState.freezeEffect = 50;
+                        playSound('eat');
+                        break;
+                    case 'poison':
+                        gameState.score = Math.max(0, gameState.score - 1);
+                        if (newSnake.length > 1) {
+                            newSnake.pop();
+                        }
+                        playSound('eat');
+                        break;
+                }
+
+                gameState.food.splice(eatenFoodIndex, 1);
+                gameState.food.push(generateFood());
+                gameState.speed = Math.max(50, gameState.speed - 2);
+                updateUI();
+            } else {
+                newSnake.pop();
+            }
+
+            gameState.snake = newSnake;
+        }
+
+        // Draw game
+        function drawGame() {
+            const canvas = document.getElementById('game-canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Clear canvas
+            ctx.fillStyle = gameState.settings.darkMode ? '#1a1a1a' : '#f0f9ff';
+            ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+            // Draw grid if classic mode
+            if (gameState.settings.classicMode) {
+                ctx.strokeStyle = gameState.settings.darkMode ? '#333' : '#e5e7eb';
+                ctx.lineWidth = 1;
+                for (let i = 0; i <= CANVAS_SIZE; i += GRID_SIZE) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, 0);
+                    ctx.lineTo(i, CANVAS_SIZE);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(0, i);
+                    ctx.lineTo(CANVAS_SIZE, i);
+                    ctx.stroke();
+                }
+            }
+
+            // Draw obstacles
+            if (gameState.settings.obstacles && gameState.obstacles.length > 0) {
+                ctx.fillStyle = '#8b5cf6';
+                gameState.obstacles.forEach(obstacle => {
+                    ctx.fillRect(obstacle.x * GRID_SIZE, obstacle.y * GRID_SIZE, GRID_SIZE - 1, GRID_SIZE - 1);
+                });
+            }
+
+            // Draw food
+            gameState.food.forEach(f => {
+                let color = '#22c55e'; // normal food
+                if (f.type === 'bonus') color = '#f59e0b';
+                else if (f.type === 'freeze') color = '#3b82f6';
+                else if (f.type === 'poison') color = '#ef4444';
+
+                ctx.fillStyle = color;
+                if (gameState.settings.classicMode) {
+                    ctx.fillRect(f.x * GRID_SIZE, f.y * GRID_SIZE, GRID_SIZE - 1, GRID_SIZE - 1);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(f.x * GRID_SIZE + GRID_SIZE / 2, f.y * GRID_SIZE + GRID_SIZE / 2, GRID_SIZE / 2 - 1, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            });
+
+            // Draw snake
+            gameState.snake.forEach((segment, index) => {
+                const isHead = index === 0;
+                ctx.fillStyle = isHead ? 
+                    (gameState.settings.darkMode ? '#10b981' : '#059669') :
+                    (gameState.settings.darkMode ? '#34d399' : '#10b981');
+
+                if (gameState.settings.classicMode) {
+                    ctx.fillRect(segment.x * GRID_SIZE, segment.y * GRID_SIZE, GRID_SIZE - 1, GRID_SIZE - 1);
+                } else {
+                    ctx.fillRect(segment.x * GRID_SIZE + 1, segment.y * GRID_SIZE + 1, GRID_SIZE - 2, GRID_SIZE - 2);
+                }
+            });
+        }
+
+        // Update UI
+        function updateUI() {
+            document.getElementById('score-display').textContent = `Score: ${gameState.score}`;
+            document.getElementById('length-display').textContent = `Length: ${gameState.snake.length}`;
+            document.getElementById('player-info').textContent = `Player: ${gameState.playerName}`;
+        }
+
+        // Show/hide screens
+        function showScreen(screenId) {
+            document.querySelectorAll('#app > div').forEach(screen => {
+                screen.classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+            gameState.currentView = screenId.replace('-screen', '').replace('-page', '');
+        }
+
+        // Start game
+        function startGame() {
+            gameState.snake = [{ x: 10, y: 10 }];
+            gameState.food = [generateFood()];
+            gameState.direction = { x: 1, y: 0 };
+            gameState.gameOver = false;
+            gameState.paused = false;
+            gameState.score = 0;
+            gameState.speed = 150;
+            gameState.speedBoost = 0;
+            gameState.freezeEffect = 0;
+
+            // Generate obstacles if enabled
+            if (gameState.settings.obstacles) {
+                gameState.obstacles = [];
+                const obstacleCount = Math.floor(Math.random() * 5) + 3;
+                for (let i = 0; i < obstacleCount; i++) {
+                    gameState.obstacles.push(generateRandomPosition());
+                }
+            }
+
+            updateUI();
+            hideOverlays();
+            startGameLoop();
+        }
+
+        // Start game loop
+        function startGameLoop() {
+            if (gameLoop) clearInterval(gameLoop);
+            
+            gameLoop = setInterval(() => {
+                if (!gameState.gameOver && !gameState.paused) {
+                    moveSnake();
+                    drawGame();
+                }
+            }, gameState.speed);
+        }
+
+        // Pause game
+        function pauseGame() {
+            gameState.paused = !gameState.paused;
+            playSound('pause');
+            
+            if (gameState.paused) {
+                document.getElementById('pause-overlay').classList.remove('hidden');
+                document.getElementById('pause-btn').textContent = 'Resume (Space)';
+                document.getElementById('mobile-pause-btn').innerHTML = '▶';
+            } else {
+                document.getElementById('pause-overlay').classList.add('hidden');
+                document.getElementById('pause-btn').textContent = 'Pause (Space)';
+                document.getElementById('mobile-pause-btn').innerHTML = '⏸';
+            }
+        }
+
+        // Show game over
+        function showGameOver() {
+            document.getElementById('final-score').textContent = `Final Score: ${gameState.score}`;
+            document.getElementById('final-length').textContent = `Snake Length: ${gameState.snake.length}`;
+            document.getElementById('game-over-overlay').classList.remove('hidden');
+            
+            // Save score
+            saveScore();
+        }
+
+        // Hide overlays
+        function hideOverlays() {
+            document.getElementById('pause-overlay').classList.add('hidden');
+            document.getElementById('game-over-overlay').classList.add('hidden');
+        }
+
+        // Save score to localStorage
+        function saveScore() {
+            const scores = JSON.parse(localStorage.getItem('snakeScores') || '[]');
+            const newScore = {
+                name: gameState.playerName,
+                score: gameState.score,
+                date: new Date().toISOString(),
+                id: Date.now()
+            };
+            scores.push(newScore);
+            scores.sort((a, b) => b.score - a.score);
+            localStorage.setItem('snakeScores', JSON.stringify(scores.slice(0, 10)));
+        }
+
+        // Load and display leaderboard
+        function loadLeaderboard() {
+            const scores = JSON.parse(localStorage.getItem('snakeScores') || '[]');
+            const container = document.getElementById('scores-container');
+            
+            if (scores.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-500">No scores yet! Play a game to see your results here.</div>';
+                return;
+            }
+
+            container.innerHTML = scores.map((score, index) => {
+                const rankClass = index === 0 ? 'bg-yellow-100 border-2 border-yellow-300' :
+                                 index === 1 ? 'bg-gray-100 border-2 border-gray-300' :
+                                 index === 2 ? 'bg-orange-100 border-2 border-orange-300' : 'bg-gray-50';
+                
+                const rankColor = index === 0 ? 'bg-yellow-500 text-white' :
+                                 index === 1 ? 'bg-gray-500 text-white' :
+                                 index === 2 ? 'bg-orange-500 text-white' : 'bg-gray-300 text-gray-700';
+
+                return `
+                    <div class="flex items-center justify-between p-3 rounded-lg ${rankClass} mb-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold ${rankColor}">
+                                ${index + 1}
+                            </div>
+                            <div>
+                                <div class="font-semibold">${score.name}</div>
+                                <div class="text-sm text-gray-500">${new Date(score.date).toLocaleDateString()}</div>
+                            </div>
+                        </div>
+                        <div class="text-xl font-bold text-green-600">${score.score}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Toggle setting
+        function toggleSetting(setting) {
+            playSound('button');
+            gameState.settings[setting] = !gameState.settings[setting];
+            updateSettingButtons();
+            
+            // Apply dark mode
+            if (setting === 'darkMode') {
+                applyDarkMode();
+            }
+        }
+
+        // Update setting buttons
+        function updateSettingButtons() {
+            const buttons = {
+                'dark-mode-btn': gameState.settings.darkMode,
+                'classic-mode-btn': gameState.settings.classicMode,
+                'obstacles-btn': gameState.settings.obstacles,
+                'powerups-btn': gameState.settings.powerUps,
+                'music-btn': gameState.settings.music,
+                'sound-btn': gameState.settings.sound
+            };
+
+            Object.entries(buttons).forEach(([id, active]) => {
+                const btn = document.getElementById(id);
+                if (active) {
+                    btn.className = btn.className.replace('border border-gray-300 bg-white hover:bg-gray-50 text-gray-700', 'bg-blue-500 hover:bg-blue-600 text-white');
+                } else {
+                    btn.className = btn.className.replace('bg-blue-500 hover:bg-blue-600 text-white', 'border border-gray-300 bg-white hover:bg-gray-50 text-gray-700');
+                }
+            });
+        }
+
+        // Apply dark mode
+        function applyDarkMode() {
+            const gameScreen = document.getElementById('game-screen');
+            if (gameState.settings.darkMode) {
+                gameScreen.className = gameScreen.className.replace('bg-gradient-to-br from-green-400 via-blue-500 to-purple-600', 'bg-gray-900');
+            } else {
+                gameScreen.className = gameScreen.className.replace('bg-gray-900', 'bg-gradient-to-br from-green-400 via-blue-500 to-purple-600');
+            }
+        }
+
+        // Handle keyboard input
+        function handleKeyPress(e) {
+            // Initialize audio on first interaction
+            if (!audioContext) {
+                initAudio();
+            }
+
+            if (gameState.currentView === 'game') {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    pauseGame();
+                    return;
+                }
+
+                // Settings toggles
+                const key = e.key.toLowerCase();
+                if (key === 'c') toggleSetting('darkMode');
+                else if (key === 't') toggleSetting('classicMode');
+                else if (key === 'o') toggleSetting('obstacles');
+                else if (key === 'p') toggleSetting('powerUps');
+                else if (key === 'm') toggleSetting('music');
+                else if (key === 's') toggleSetting('sound');
+
+                // Movement
+                if (!gameState.gameOver && !gameState.paused) {
+                    switch (key) {
+                        case 'arrowup':
+                        case 'w':
+                            if (gameState.direction.y === 0) gameState.direction = { x: 0, y: -1 };
+                            break;
+                        case 'arrowdown':
+                        case 's':
+                            if (gameState.direction.y === 0) gameState.direction = { x: 0, y: 1 };
+                            break;
+                        case 'arrowleft':
+                        case 'a':
+                            if (gameState.direction.x === 0) gameState.direction = { x: -1, y: 0 };
+                            break;
+                        case 'arrowright':
+                        case 'd':
+                            if (gameState.direction.x === 0) gameState.direction = { x: 1, y: 0 };
+                            break;
+                    }
+                }
+            }
+        }
+
+        // Handle direction change
+        function changeDirection(newDirection) {
+            if (gameState.gameOver || gameState.paused) return;
+
+            // Prevent reverse direction
+            if ((newDirection.x === -gameState.direction.x && newDirection.y === -gameState.direction.y) ||
+                (newDirection.x === gameState.direction.x && newDirection.y === gameState.direction.y)) {
+                return;
+            }
+
+            // Prevent moving in opposite direction
+            if ((gameState.direction.x !== 0 && newDirection.x !== 0) || 
+                (gameState.direction.y !== 0 && newDirection.y !== 0)) {
+                return;
+            }
+
+            playSound('button');
+            gameState.direction = newDirection;
+        }
+
+        // Initialize game
+        function initGame() {
+            // Hide loading screen
+            setTimeout(() => {
+                document.getElementById('loading-screen').style.display = 'none';
+            }, 1000);
+
+            // Event listeners
+            document.addEventListener('keydown', handleKeyPress);
+
+            // Landing page events
+            const playerNameInput = document.getElementById('playerName');
+            const startGameBtn = document.getElementById('start-game-btn');
+            
+            playerNameInput.addEventListener('input', (e) => {
+                const name = e.target.value.trim();
+                startGameBtn.disabled = !name;
+                gameState.playerName = name;
+            });
+
+            playerNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && gameState.playerName) {
+                    playSound('button');
+                    showScreen('game-screen');
+                    startGame();
+                }
+            });
+
+            startGameBtn.addEventListener('click', () => {
+                if (!audioContext) initAudio();
+                playSound('button');
+                showScreen('game-screen');
+                startGame();
+            });
+
+            document.getElementById('leaderboard-btn').addEventListener('click', () => {
+                if (!audioContext) initAudio();
+                playSound('button');
+                loadLeaderboard();
+                showScreen('leaderboard-screen');
+            });
+
+            // Game screen events
+            document.getElementById('pause-btn').addEventListener('click', () => {
+                playSound('button');
+                pauseGame();
+            });
+
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                playSound('button');
+                startGame();
+            });
+
+            document.getElementById('menu-btn').addEventListener('click', () => {
+                playSound('button');
+                if (gameLoop) clearInterval(gameLoop);
+                showScreen('landing-page');
+            });
+
+            document.getElementById('resume-btn').addEventListener('click', () => {
+                playSound('button');
+                pauseGame();
+            });
+
+            document.getElementById('play-again-btn').addEventListener('click', () => {
+                playSound('button');
+                startGame();
+            });
+
+            document.getElementById('back-to-menu-btn').addEventListener('click', () => {
+                playSound('button');
+                if (gameLoop) clearInterval(gameLoop);
+                showScreen('landing-page');
+            });
+
+            // Mobile controls
+            document.getElementById('up-btn').addEventListener('click', () => changeDirection({ x: 0, y: -1 }));
+            document.getElementById('down-btn').addEventListener('click', () => changeDirection({ x: 0, y: 1 }));
+            document.getElementById('left-btn').addEventListener('click', () => changeDirection({ x: -1, y: 0 }));
+            document.getElementById('right-btn').addEventListener('click', () => changeDirection({ x: 1, y: 0 }));
+            document.getElementById('mobile-pause-btn').addEventListener('click', () => {
+                playSound('button');
+                pauseGame();
+            });
+
+            // Settings buttons
+            document.getElementById('dark-mode-btn').addEventListener('click', () => toggleSetting('darkMode'));
+            document.getElementById('classic-mode-btn').addEventListener('click', () => toggleSetting('classicMode'));
+            document.getElementById('obstacles-btn').addEventListener('click', () => toggleSetting('obstacles'));
+            document.getElementById('powerups-btn').addEventListener('click', () => toggleSetting('powerUps'));
+            document.getElementById('music-btn').addEventListener('click', () => toggleSetting('music'));
+            document.getElementById('sound-btn').addEventListener('click', () => toggleSetting('sound'));
+
+            // Leaderboard events
+            document.getElementById('back-to-menu-leaderboard').addEventListener('click', () => {
+                playSound('button');
+                showScreen('landing-page');
+            });
+
+            document.getElementById('clear-scores-btn').addEventListener('click', () => {
+                playSound('button');
+                localStorage.removeItem('snakeScores');
+                loadLeaderboard();
+            });
+
+            // Touch events for mobile
+            ['up-btn', 'down-btn', 'left-btn', 'right-btn', 'mobile-pause-btn'].forEach(id => {
+                const btn = document.getElementById(id);
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    btn.click();
+                });
+            });
+
+            // Start drawing loop
+            setInterval(drawGame, 16); // 60 FPS
+        }
+
+        // Start the game when page loads
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
